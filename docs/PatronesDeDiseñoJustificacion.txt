@@ -1,0 +1,5 @@
+Justificación de los patrones aplicados:
+Factory Method: Elegimos este patrón para crear distintos tipos de autores, como un usuario que responde manualmente o un autor automático que genera respuestas mediante una IA. La fábrica decide qué tipo de autor instanciar según el criterio definido por el sistema, de esta forma podemos tratar a ambos mediante una interfaz común, sin que las clases que los utilizan dependan directamente de sus implementaciones concretas.
+
+Strategy: Elegimos este patrón para permitir distintas formas de generar una respuesta a una misma pregunta.Por ejemplo, podemos utilizar diferentes IA, como Gemini u OpenAI, o una implementación local.Con esto podemos cambiar la forma de generar las respuestas y agregar nuevas alternativas en un futuro ,sin modificar el resto del sistema.
+
