@@ -1,11 +1,32 @@
-# IS1\_Trabajo\_Grupo26
+# \# Trabajo Integrador — Ingeniería de Software 1 (Grupo 26)
 
-Trabajo integrador de Ingenieria De Software 1
+# 
 
-Participantes del Grupo:
-+Ghersinich, Matias Ezequiel
-+Testa, Ignacio Agustin
-+Gutierrez, Brisa Valentina
-+Herera, Milena
-+Gonzalez, Alexsandra
+# Repositorio correspondiente al Trabajo Práctico Integrador de la asignatura \*\*Ingeniería de Software 1\*\* de la \*\*Licenciatura en Ciencias de la Computación\*\* en la \*\*Universidad Nacional de Río Cuarto (UNRC)\*\*.
+
+# 
+
+# \---
+
+# 
+
+# \## Integrantes del Equipo
+
+# 
+
+# \* \*\*Ghersinich, Matías Ezequiel\*\*
+
+# \* \*\*González, Alexsandra\*\*
+
+# \* \*\*Gutiérrez, Brisa Valentina\*\*
+
+# \* \*\*Herrera, Milena\*\*
+
+# \* \*\*Testa, Ignacio Agustín\*\*
+
+# 
+
+# 
+
+# 
 
