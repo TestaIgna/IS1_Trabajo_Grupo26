@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <!-- Codificación para tildes/ñ y ajuste responsivo en distintos dispositivos -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Título dinámico: cada plantilla hija (index.html, detail.html, etc.) define el suyo -->
+    <title>{% block title %}Foro Q&amp;A{% endblock %}</title>
+
+    <!-- Hoja de estilos principal según el árbol del repo: static/css/app.css -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+
+    <!-- Bloque opcional para estilos o etiquetas extra en <head> -->
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <!-- Barra superior compartida por todas las páginas -->
+    <header class="site-header">
+        <div class="container header-bar">
+            <a class="brand" href="{{ url_for('web.index') if 'web.index' in current_app.view_functions else '#' }}">
+                Q&amp;A
+            </a>
+
+            <nav class="main-nav" aria-label="Navegación principal">
+                {% block nav_links %}
+                    <a href="#preguntas">Preguntas</a>
+                    <a href="#nueva-pregunta">Nueva pregunta</a>
+                    <a href="#registro">Registrarse</a>
+                {% endblock %}
+            </nav>
+        </div>
+    </header>
+
+    <!-- Contenido principal de cada pantalla -->
+    <main class="container page-main">
+        <!-- Mensajes flash para avisos, éxitos o errores -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-list" role="status">
+                    {% for category, message in messages %}
+                        <div class="flash flash-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <!-- Bloque principal donde se inserta el contenido de cada plantilla hija -->
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Pie de página común -->
+    <footer class="site-footer">
+        <div class="container">
+            <p>Ingeniería de Software I — Grupo 26</p>
+        </div>
+    </footer>
+
+    <!-- Scripts opcionales al final del body (por ejemplo static/js/app.js) -->
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>
