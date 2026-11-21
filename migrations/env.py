@@ -3,8 +3,13 @@ from logging.config import fileConfig
 
 from alembic import context
 
-# Importar models asegura que futuros modelos ORM queden registrados en db.metadata.
-import is1_trabajo_grupo26.models  # noqa: F401
+# Importar los módulos ORM asegura que queden registrados en db.metadata.
+import is1_trabajo_grupo26.models.author_model
+import is1_trabajo_grupo26.models.category
+import is1_trabajo_grupo26.models.question
+import is1_trabajo_grupo26.models.response
+import is1_trabajo_grupo26.models.tag
+import is1_trabajo_grupo26.models.vote  # noqa: F401
 from is1_trabajo_grupo26 import create_app
 from is1_trabajo_grupo26.extensions import db
 

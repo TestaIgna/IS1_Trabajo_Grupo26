@@ -1,5 +1,11 @@
 import pytest
 
+import is1_trabajo_grupo26.models.author_model
+import is1_trabajo_grupo26.models.category
+import is1_trabajo_grupo26.models.question
+import is1_trabajo_grupo26.models.response
+import is1_trabajo_grupo26.models.tag
+import is1_trabajo_grupo26.models.vote  # noqa: F401
 from is1_trabajo_grupo26 import create_app
 from is1_trabajo_grupo26.config import TestingConfig
 from is1_trabajo_grupo26.extensions import db as _db
