@@ -12,7 +12,9 @@ def create_app(config_class=Config):
     db.init_app(app)
 
     from is1_trabajo_grupo26.api.health import health_bp
+    from is1_trabajo_grupo26.services.user_registration import users_bp
 
     app.register_blueprint(health_bp)
+    app.register_blueprint(users_bp)
 
     return app
