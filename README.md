@@ -31,14 +31,14 @@ Toda la documentación técnica, el diseño del sistema y las decisiones de arqu
 
 | Archivo | Descripción | Enlace Directo |
 | :--- | :--- | :---: |
-| **Diagrama de Clases UML** | Diseño estructural del sistema con sus clases, relaciones y patrones aplicados. | [📐 Ver imagen (`diagramaP.png`)](./docs/diagramaP.png) |
+| **Diagrama de Clases UML** | Diseño estructural del sistema con sus clases, relaciones y patrones aplicados. | [📐 Ver imagen (`diagramaP.jpg`)](./docs/diagramaP.jpg) |
 | **Justificación de Patrones** | Fundamentación técnica de los patrones de diseño implementados (*Factory Method* y *Strategy*). | [⚙️ Leer documento (`PatronesDeDiseñoJustificacion.txt`)](./docs/PatronesDeDise%C3%B1oJustificacion.txt) |
 
 <details>
 <summary>👁️ <b>Haz clic aquí para previsualizar el Diagrama de Clases UML</b></summary>
 <br>
 <div align="center">
-  <img src="./docs/diagramaP.png" alt="Diagrama de Clases UML" width="100%">
+  <img src="./docs/diagramaP.jpg" alt="Diagrama de Clases UML" width="100%">
 </div>
 </details>
 
