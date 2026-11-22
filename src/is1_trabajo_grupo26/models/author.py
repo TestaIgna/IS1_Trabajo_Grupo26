@@ -3,7 +3,7 @@ from enum import Enum
 from typing import Any
 
 
-class TipoRol(str, Enum):
+class Role_Type(str, Enum):
     """Roles válidos para los distintos tipos de autores del sistema."""
 
     USERGRAL = "USERGRAL"
@@ -11,8 +11,8 @@ class TipoRol(str, Enum):
     BOT = "BOT"
 
     @classmethod
-    def from_value(cls, value: "TipoRol | str") -> "TipoRol":
-        """Normaliza y valida un rol recibido como TipoRol o cadena."""
+    def from_value(cls, value: "Role_Type | str") -> "Role_Type":
+        """Normaliza y valida un rol recibido como Role_Type o cadena."""
         if isinstance(value, cls):
             return value
         if isinstance(value, str):
@@ -24,38 +24,49 @@ class TipoRol(str, Enum):
         raise ValueError(f"Rol inválido: {value!r}")
 
 
+TipoRol = Role_Type
+
+
 class AuthorResponse(ABC):
     """Interfaz común para cualquier autor capaz de responder en el sistema."""
 
-    def __init__(self, nombre: str, rol: TipoRol | str) -> None:
+    def __init__(self, nombre: str, rol: Role_Type | str) -> None:
         cleaned_name = nombre.strip() if isinstance(nombre, str) else ""
         if not cleaned_name:
             raise ValueError("El nombre del autor no puede estar vacío.")
         self.nombre: str = cleaned_name
-        self.rol: TipoRol = TipoRol.from_value(rol)
+        self.rol: Role_Type = Role_Type.from_value(rol)
 
     @abstractmethod
-    def get_nombre(self) -> str:
+    def getName(self) -> str:
         """Retorna el nombre visible del autor."""
 
     @abstractmethod
-    def get_rol(self) -> TipoRol:
+    def getRoleType(self) -> Role_Type:
         """Retorna el rol asignado al autor."""
+
+    def get_nombre(self) -> str:
+        """Alias de compatibilidad para getName."""
+        return self.getName()
+
+    def get_rol(self) -> Role_Type:
+        """Alias de compatibilidad para getRoleType."""
+        return self.getRoleType()
 
 
 class User(AuthorResponse):
     """Autor humano del sistema (usuario general o administrador)."""
 
-    _ALLOWED_ROLES = frozenset({TipoRol.USERGRAL, TipoRol.ADMIN})
+    _ALLOWED_ROLES = frozenset({Role_Type.USERGRAL, Role_Type.ADMIN})
 
     def __init__(
         self,
         nombre: str,
         email: str,
         password: str,
-        rol: TipoRol | str = TipoRol.USERGRAL,
+        rol: Role_Type | str = Role_Type.USERGRAL,
     ) -> None:
-        parsed_rol = TipoRol.from_value(rol)
+        parsed_rol = Role_Type.from_value(rol)
         if parsed_rol not in self._ALLOWED_ROLES:
             raise ValueError(
                 f"Un autor User solo puede tener rol USERGRAL o ADMIN, no {parsed_rol.value}."
@@ -71,10 +82,10 @@ class User(AuthorResponse):
         self.email: str = cleaned_email
         self.password: str = password
 
-    def get_nombre(self) -> str:
+    def getName(self) -> str:
         return self.nombre
 
-    def get_rol(self) -> TipoRol:
+    def getRoleType(self) -> Role_Type:
         return self.rol
 
 
@@ -84,11 +95,11 @@ class LLM(AuthorResponse):
     def __init__(
         self,
         nombre: str,
-        rol: TipoRol | str = TipoRol.BOT,
+        rol: Role_Type | str = Role_Type.BOT,
         strategy: Any | None = None,
     ) -> None:
-        parsed_rol = TipoRol.from_value(rol)
-        if parsed_rol != TipoRol.BOT:
+        parsed_rol = Role_Type.from_value(rol)
+        if parsed_rol != Role_Type.BOT:
             raise ValueError(
                 f"Un autor LLM debe tener rol BOT, no {parsed_rol.value}."
             )
@@ -96,10 +107,10 @@ class LLM(AuthorResponse):
         super().__init__(nombre=nombre, rol=parsed_rol)
         self.strategy: Any | None = strategy
 
-    def get_nombre(self) -> str:
+    def getName(self) -> str:
         return self.nombre
 
-    def get_rol(self) -> TipoRol:
+    def getRoleType(self) -> Role_Type:
         return self.rol
 
     def set_strategy(self, strategy: Any) -> None:

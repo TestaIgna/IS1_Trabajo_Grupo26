@@ -2,33 +2,52 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable
 from typing import Any
 
-from is1_trabajo_grupo26.models.author import LLM, AuthorResponse, TipoRol, User
+from is1_trabajo_grupo26.models.author import LLM, AuthorResponse, Role_Type, User
 
 
 class AuthorFactory(ABC):
     """Fábrica abstracta para la creación de autores (Patrón Factory Method)."""
 
     @abstractmethod
-    def createAutor(
+    def createAuthor(
         self,
         author_type: str,
         nombre: str,
-        rol: TipoRol | str | None = None,
+        rol: Role_Type | str | None = None,
         email: str | None = None,
         password: str | None = None,
         strategy: Any | None = None,
     ) -> AuthorResponse:
         """Crea y retorna una instancia concreta de AuthorResponse."""
 
-
-class AuthorConcreteFactory(AuthorFactory):
-    """Fábrica concreta encargada de instanciar autores User o LLM."""
-
     def createAutor(
         self,
         author_type: str,
         nombre: str,
-        rol: TipoRol | str | None = None,
+        rol: Role_Type | str | None = None,
+        email: str | None = None,
+        password: str | None = None,
+        strategy: Any | None = None,
+    ) -> AuthorResponse:
+        """Alias de compatibilidad para createAuthor."""
+        return self.createAuthor(
+            author_type=author_type,
+            nombre=nombre,
+            rol=rol,
+            email=email,
+            password=password,
+            strategy=strategy,
+        )
+
+
+class AuthorConcreteFactory(AuthorFactory):
+    """Fábrica concreta encargada de instanciar autores User o LLM."""
+
+    def createAuthor(
+        self,
+        author_type: str,
+        nombre: str,
+        rol: Role_Type | str | None = None,
         email: str | None = None,
         password: str | None = None,
         strategy: Any | None = None,
@@ -60,7 +79,7 @@ class AuthorConcreteFactory(AuthorFactory):
     def _create_user(
         self,
         nombre: str,
-        rol: TipoRol | str | None = None,
+        rol: Role_Type | str | None = None,
         email: str | None = None,
         password: str | None = None,
         **_unused: Any,
@@ -69,15 +88,15 @@ class AuthorConcreteFactory(AuthorFactory):
             raise ValueError(
                 "Para crear un autor de tipo 'user' se requieren 'email' y 'password'."
             )
-        target_rol = TipoRol.USERGRAL if rol is None else rol
+        target_rol = Role_Type.USERGRAL if rol is None else rol
         return User(nombre=nombre, email=email, password=password, rol=target_rol)
 
     def _create_llm(
         self,
         nombre: str,
-        rol: TipoRol | str | None = None,
+        rol: Role_Type | str | None = None,
         strategy: Any | None = None,
         **_unused: Any,
     ) -> LLM:
-        target_rol = TipoRol.BOT if rol is None else rol
+        target_rol = Role_Type.BOT if rol is None else rol
         return LLM(nombre=nombre, rol=target_rol, strategy=strategy)

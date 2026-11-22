@@ -31,13 +31,48 @@ Toda la documentación técnica, el diseño del sistema y las decisiones de arqu
 
 | Archivo | Descripción | Enlace Directo |
 | :--- | :--- | :---: |
-| **Diagrama de Clases UML** | Diseño estructural del sistema con sus clases, relaciones y patrones aplicados. | [📐 Ver imagen (`diagramaP.png`)](./docs/diagramaP.png) |
+| **Diagrama de Clases UML** | Diseño estructural del sistema con sus clases, relaciones y patrones aplicados. | [📐 Ver imagen (`diagramaP.jpg`)](./docs/diagramaP.jpg) |
 | **Justificación de Patrones** | Fundamentación técnica de los patrones de diseño implementados (*Factory Method* y *Strategy*). | [⚙️ Leer documento (`PatronesDeDiseñoJustificacion.txt`)](./docs/PatronesDeDise%C3%B1oJustificacion.txt) |
 
 <details>
 <summary>👁️ <b>Haz clic aquí para previsualizar el Diagrama de Clases UML</b></summary>
 <br>
 <div align="center">
-  <img src="./docs/diagramaP.png" alt="Diagrama de Clases UML" width="100%">
+  <img src="./docs/diagramaP.jpg" alt="Diagrama de Clases UML" width="100%">
 </div>
 </details>
+
+---
+
+## 🗄️ Base de Datos, Migraciones y Tests
+
+### Configuración local
+Por defecto el proyecto usa **SQLite local** (`DATABASE_URL=sqlite:///app.db`). Si querés personalizar las variables de entorno usando un archivo `.env` (copiado desde [`.env.example`](./.env.example)), podés pasarlo con `--env-file`:
+
+```bash
+uv run --env-file .env alembic upgrade head
+```
+
+### Comandos de Alembic (migraciones)
+```bash
+# Ver el estado actual de las migraciones en la base
+uv run alembic current
+
+# Generar una nueva migración automática a partir de los modelos en db.metadata
+uv run alembic revision --autogenerate -m "descripcion del cambio"
+
+# Aplicar todas las migraciones pendientes
+uv run alembic upgrade head
+
+# Revertir la última migración aplicada
+uv run alembic downgrade -1
+```
+
+> **Nota:** Cada vez que agregues un nuevo modelo heredado de `db.Model`, asegurate de importarlo en [`src/is1_trabajo_grupo26/models/__init__.py`](./src/is1_trabajo_grupo26/models/__init__.py) para que `alembic revision --autogenerate` lo detecte.
+
+### Ejecutar tests
+Los tests usan `TestingConfig` sobre SQLite en memoria (`sqlite:///:memory:`), por lo que no modifican la base de datos local:
+
+```bash
+uv run pytest -v
+```
