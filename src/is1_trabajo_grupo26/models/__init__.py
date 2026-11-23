@@ -5,7 +5,7 @@ from is1_trabajo_grupo26.models.author import (
     TipoRol,
     User,
 )
-
+from is1_trabajo_grupo26.models.vote import Vote, VoteType
 __all__ = [
     "LLM",
     "AuthorResponse",
