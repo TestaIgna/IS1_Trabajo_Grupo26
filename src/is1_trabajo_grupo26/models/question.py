@@ -1,7 +1,7 @@
 from datetime import date
 
 from is1_trabajo_grupo26.extensions import db
-from is1_trabajo_grupo26.models.vote import calculate_vote_score
+from is1_trabajo_grupo26.models.vote import VoteType
 
 question_tag = db.Table(
     "question_tag",
@@ -59,5 +59,8 @@ class Question(db.Model):
     )
 
     def calculate_score(self) -> int:
-        """Retorna la puntuación acumulada de la pregunta."""
-        return calculate_vote_score(self.votes)
+        """Retorna la puntuación acumulada de la pregunta (+1 POSITIVE, -1 NEGATIVE)."""
+        return sum(
+            1 if v.vote == VoteType.POSITIVE else -1
+            for v in self.votes
+        )
