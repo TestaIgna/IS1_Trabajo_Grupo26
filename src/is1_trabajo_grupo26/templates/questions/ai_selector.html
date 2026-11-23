@@ -1,0 +1,151 @@
+<div class="ai-container">
+    <style>
+        .ai-container {
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            padding: 26px 24px;
+            border-radius: 22px;
+            width: 100%;
+            max-width: 360px;
+            margin: 16px auto;
+            box-sizing: border-box;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+
+        .ai-container .ai-header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            margin-bottom: 18px;
+        }
+
+        .ai-container .robot-icon {
+            width: 72px;
+            height: 72px;
+            margin-bottom: 8px;
+            filter: drop-shadow(0 6px 10px rgba(13, 34, 45, 0.14));
+            animation: ai-flotar 3s ease-in-out infinite;
+        }
+
+        @keyframes ai-flotar {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-6px); }
+        }
+
+        /* Guiño del robot al pasar el mouse por la tarjeta */
+        .ai-container .ojo-derecho {
+            transform-origin: 39px 26px;
+            transition: transform 0.15s ease;
+        }
+
+        .ai-container:hover .ojo-derecho {
+            transform: scaleY(0.15);
+        }
+
+        .ai-container .ai-title {
+            margin: 0;
+            color: #1f1d2b;
+            font-size: 1.35rem;
+            font-weight: 700;
+        }
+
+        .ai-container .ai-error-message {
+            color: #721c24;
+            background-color: #f8d7da;
+            padding: 10px 12px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+        }
+
+        .ai-container .ai-form-group {
+            margin-bottom: 16px;
+        }
+
+        .ai-container .ai-form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            color: #333333;
+            font-size: 0.9rem;
+        }
+
+        .ai-container .ai-select {
+            width: 100%;
+            padding: 11px 12px;
+            box-sizing: border-box;
+            border: 1px solid #bce3e1;
+            border-radius: 12px;
+            background-color: #ffffff;
+            color: #1f1d2b;
+            font-size: 0.95rem;
+            font-family: inherit;
+            cursor: pointer;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .ai-container .ai-select:focus {
+            outline: none;
+            border-color: #2ec4b6;
+            box-shadow: 0 0 0 3px rgba(46, 196, 182, 0.18);
+        }
+
+        .ai-container .ai-submit-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #2ec4b6 0%, #38b6c9 100%);
+            border: none;
+            color: #ffffff;
+            border-radius: 999px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            box-shadow: 0 4px 14px rgba(46, 196, 182, 0.35);
+            transition: transform 0.15s ease, box-shadow 0.2s ease, filter 0.2s ease;
+        }
+
+        .ai-container .ai-submit-btn:hover {
+            filter: brightness(0.95);
+            box-shadow: 0 6px 18px rgba(46, 196, 182, 0.45);
+            transform: translateY(-1px);
+        }
+    </style>
+
+    <div class="ai-header">
+        <svg class="robot-icon" viewBox="0 0 64 64" aria-hidden="true">
+            <rect x="24" y="5" width="16" height="6" rx="3" fill="#cfd6e0"/>
+            <rect x="4" y="23" width="8" height="16" rx="4" fill="#cfd6e0"/>
+            <rect x="52" y="23" width="8" height="16" rx="4" fill="#cfd6e0"/>
+            <rect x="10" y="10" width="44" height="38" rx="14" fill="#eef2f6" stroke="#d5dde6" stroke-width="2"/>
+            <rect x="15" y="16" width="34" height="26" rx="9" fill="#0d222d"/>
+            <path d="M 21 27 Q 25 22 29 27" fill="none" stroke="#5ce1e6" stroke-width="3" stroke-linecap="round"/>
+            <path class="ojo-derecho" d="M 35 27 Q 39 22 43 27" fill="none" stroke="#5ce1e6" stroke-width="3" stroke-linecap="round"/>
+            <path d="M 29 33 Q 32 37 35 33 Z" fill="#5ce1e6"/>
+            <ellipse cx="32" cy="56" rx="12" ry="2.5" fill="rgba(13, 34, 45, 0.15)"/>
+        </svg>
+
+        <h3 class="ai-title">Asistente IA</h3>
+    </div>
+
+    {% if error_ia %}
+        <div class="ai-error-message" role="alert">
+            <strong>Error:</strong> {{ error_ia }}
+        </div>
+    {% endif %}
+
+    <form method="post" action="{{ url_for('questions.generate_ai_answer', question_id=question.id) if question is defined else '' }}">
+        <div class="ai-form-group">
+            <label for="ia-provider">Modelo de IA</label>
+            <select id="ia-provider" name="provider" class="ai-select" required>
+                <option value="gemini" {% if selected_provider == "gemini" %}selected{% endif %}>Gemini</option>
+                <option value="openai" {% if selected_provider == "openai" %}selected{% endif %}>OpenAI</option>
+                <option value="local" {% if selected_provider == "local" %}selected{% endif %}>Local</option>
+            </select>
+        </div>
+
+        <button type="submit" class="ai-submit-btn">Generar respuesta</button>
+    </form>
+</div>
