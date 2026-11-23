@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="es">
+    <head>
+        <meta charset="utf-8">
+        <title>Registro de usuario</title>
+    </head>
+
+    <body>
+        <h1>Registro</h1>
+        {% if error %}
+            <p>{{ error }}</p>
+        {% endif %}
+
+        <form method="POST">
+
+            <label for = "nombre">Nombre</label>
+            <input id="nombre" type="text" name="nombre" value="{{ nombre or '' }}">
+
+            <label for="email">Email</label>
+            <input id="email" type="email" name="email" value="{{ email or '' }}">
+
+            <label for="password">Password</label>
+            <input id="password" type="password" name="password">
+            
+        </form>
+
+    </body>
+
+
+</html>
