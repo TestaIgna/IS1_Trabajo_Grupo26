@@ -116,3 +116,28 @@ class LLM(AuthorResponse):
     def set_strategy(self, strategy: Any) -> None:
         """Asocia o reemplaza la estrategia de generación de respuestas (Issue #33)."""
         self.strategy = strategy
+
+    def answerQuestion(self, q) -> str:
+        """Genera una respuesta delegando en la estrategia configurada."""
+        if self.strategy is None:
+            return (
+                "No se pudo generar la respuesta: "
+                "no hay una estrategia configurada."
+            )
+
+        try:
+            return self.strategy.createResponse(q.title, q.body)
+        except Exception as exc:  # noqa: BLE001 - la IA puede fallar por distintas razones
+            return f"No se pudo generar la respuesta: {exc}"
+
+    def shouldAnswer(self, q) -> bool:
+        """Indica si la pregunta pide ayuda de IA mediante el tag '#ia-help'."""
+        tags = getattr(q, "tags", [])
+        for tag in tags:
+            tag_name = tag if isinstance(tag, str) else getattr(tag, "title", "")
+            if (
+                isinstance(tag_name, str)
+                and tag_name.strip().lower() == "#ia-help"
+            ):
+                return True
+        return False
