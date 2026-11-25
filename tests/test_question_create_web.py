@@ -43,6 +43,12 @@ def test_create_question_get_renders_categories_ia_help_and_recommended_tags(app
     html_default = resp_default.data.decode("utf-8")
     assert "Python" in html_default
     assert "Bases de Datos" in html_default
+    assert html_default.index("Seleccione una opción") < html_default.index("Crear categoría")
+    assert html_default.index("Crear categoría") < html_default.index("Bases de Datos")
+    assert html_default.index("Bases de Datos") < html_default.index("Python")
+    assert 'id="new-category-field"' in html_default
+    assert 'id="new-category-field"' in html_default and " hidden>" in html_default
+    assert 'id="new_category_name"' in html_default
     assert "#ia-help" in html_default
     assert "backend" in html_default
 
@@ -158,6 +164,100 @@ def test_create_question_post_rejects_invalid_category(app, client):
     assert "Debés seleccionar una categoría válida." in resp.data.decode("utf-8")
 
     with app.app_context():
+        assert db.session.execute(db.select(Question)).scalars().all() == []
+
+
+def test_create_question_creates_new_category(app, client):
+    user_id, _, _ = _seed_web_context(app)
+    _login_session(client, user_id)
+
+    resp = client.post(
+        "/questions/nueva",
+        data={
+            "title": "Pregunta en nueva categoría",
+            "body": "Consulta sobre infraestructura",
+            "category_id": "__create_new__",
+            "new_category_name": "infraestructura",
+        },
+        follow_redirects=False,
+    )
+
+    assert resp.status_code == 302
+    with app.app_context():
+        category = db.session.execute(
+            db.select(Category).where(Category.name == "Infraestructura")
+        ).scalar_one()
+        question = db.session.execute(
+            db.select(Question).where(Question.title == "Pregunta en nueva categoría")
+        ).scalar_one()
+        assert question.category_id == category.id
+
+
+def test_new_category_name_is_capitalized_and_ignored_for_existing_choice(app, client):
+    user_id, cat_py_id, _ = _seed_web_context(app)
+    _login_session(client, user_id)
+
+    resp = client.post(
+        "/questions/nueva",
+        data={
+            "title": "Pregunta con categoría existente",
+            "body": "Debe conservar la categoría elegida.",
+            "category_id": str(cat_py_id),
+            "new_category_name": "no crear esta categoría",
+        },
+        follow_redirects=False,
+    )
+
+    assert resp.status_code == 302
+    with app.app_context():
+        categories = db.session.execute(db.select(Category)).scalars().all()
+        assert {category.name for category in categories} == {"Python", "Bases de Datos"}
+
+
+def test_create_question_rejects_case_insensitive_duplicate_category(app, client):
+    user_id, _, _ = _seed_web_context(app)
+    _login_session(client, user_id)
+    with app.app_context():
+        db.session.add(Category(name="Ingeniería"))
+        db.session.commit()
+
+    resp = client.post(
+        "/questions/nueva",
+        data={
+            "title": "Pregunta duplicada",
+            "body": "No se debe crear otra categoría.",
+            "category_id": "__create_new__",
+            "new_category_name": "ingeniería",
+        },
+    )
+
+    assert resp.status_code == 400
+    assert "Ya existe una categoría con ese nombre." in resp.data.decode("utf-8")
+    assert "__create_new__" in resp.data.decode("utf-8")
+    with app.app_context():
+        categories = db.session.execute(db.select(Category)).scalars().all()
+        assert len(categories) == 3
+        assert db.session.execute(db.select(Question)).scalars().all() == []
+
+
+def test_create_question_requires_new_category_name(app, client):
+    user_id, _, _ = _seed_web_context(app)
+    _login_session(client, user_id)
+
+    resp = client.post(
+        "/questions/nueva",
+        data={
+            "title": "Pregunta sin categoría",
+            "body": "Falta el nombre de la categoría.",
+            "category_id": "__create_new__",
+            "new_category_name": "   ",
+        },
+    )
+
+    assert resp.status_code == 400
+    assert "El nombre de la categoría es obligatorio." in resp.data.decode("utf-8")
+    with app.app_context():
+        assert len(db.session.execute(db.select(Category)).scalars().all()) == 2
         assert db.session.execute(db.select(Question)).scalars().all() == []
 
 
