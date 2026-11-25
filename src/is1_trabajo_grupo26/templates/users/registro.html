@@ -4,21 +4,32 @@
 
 {% block content %}
     <section class="card">
-        <h1>Registro</h1>
+        <h1>Registro de Usuario</h1>
+
         {% if error %}
             <p class="flash flash-danger">{{ error }}</p>
         {% endif %}
 
-        <form method="POST">
-            <label for = "nombre">Nombre</label>
+        <form method="POST" action="{{ url_for('users.registro') }}" novalidate>
+            <label for="nombre">Nombre</label>
             <input id="nombre" type="text" name="nombre" value="{{ nombre or '' }}">
+            {% if errors and errors.get('nombre') %}
+                <p class="flash flash-danger">{{ errors.nombre }}</p>
+            {% endif %}
 
             <label for="email">Email</label>
             <input id="email" type="email" name="email" value="{{ email or '' }}">
+            {% if errors and errors.get('email') %}
+                <p class="flash flash-danger">{{ errors.email }}</p>
+            {% endif %}
 
             <label for="password">Password</label>
             <input id="password" type="password" name="password">
-            <button class="btn btn-primary" type="submit" style="margin-top: 12px;">Crear cuenta</button>
+            {% if errors and errors.get('password') %}
+                <p class="flash flash-danger">{{ errors.password }}</p>
+            {% endif %}
+
+            <button class="btn btn-primary" type="submit" style="margin-top: 12px;">Registrarme</button>
         </form>
     </section>
 {% endblock %}
