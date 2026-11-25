@@ -20,5 +20,9 @@ def create_app(config_class=Config):
     from is1_trabajo_grupo26.web.questions import questions_bp
 
     app.register_blueprint(questions_bp)
-    
+
+    from is1_trabajo_grupo26.api import register_api
+
+    register_api(app)
+
     return app
