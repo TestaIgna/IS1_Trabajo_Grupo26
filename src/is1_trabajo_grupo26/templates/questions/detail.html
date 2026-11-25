@@ -17,7 +17,7 @@
             {% if question.category is defined and question.category %}
                 <span>
                     Categoría:
-                    <strong>{{ question.category.title if question.category.title is defined else question.category }}</strong>
+                    <strong>{{ question.category.name }}</strong>
                 </span>
             {% endif %}
 
@@ -44,29 +44,53 @@
 
     {# Bloque de opciones de IA (#41)#}
     {% if has_ia_tag is defined and has_ia_tag %}
-        {% include "questions/ai_selector.html" %}
+        <aside class="card ai-detail-block" aria-label="Opciones de respuesta automática">
+            {% include "questions/ai_selector.html" %}
+        </aside>
     {% endif %}
 
-    {# Listado de respuestas (responses.html cuando esté construido) #}
     <section class="card question-responses">
         <h2>Respuestas</h2>
 
-        {# Cuando esté listo el parcial de respuestas va incluido aca 
-           {% include "questions/responses.html" %} #}
+        <form method="post"
+              action="{{ url_for('questions.create_answer', question_id=question.id) }}"
+              class="answer-form">
+            <label for="answer-body">Escribir una respuesta</label>
+            <textarea id="answer-body"
+                      name="body"
+                      rows="5"
+                      required
+                      placeholder="Compartí tu solución o explicación"></textarea>
+            <button class="btn btn-primary" type="submit">Publicar respuesta</button>
+        </form>
 
-        {% if question.responses is defined and question.responses %}
+        {% if question.responses %}
             <ul class="response-list">
-                {% for resp in question.responses %}
+                {% for resp in question.responses|sort(attribute='id') %}
                     <li class="response-item">
+                        {% if resp.is_accepted %}
+                            <span class="accepted-badge">Respuesta aceptada</span>
+                        {% endif %}
+                        {% if resp.author.role.value == 'BOT' %}
+                            <span class="bot-badge">Respuesta automática</span>
+                        {% endif %}
                         <p>{{ resp.body }}</p>
-                        <small>
-                            {% if resp.author is defined and resp.author %}
-                                Por: {{ resp.author.name if resp.author.name is defined else resp.author }}
-                            {% endif %}
-                            {% if resp.date is defined and resp.date %}
-                                — {{ resp.date }}
-                            {% endif %}
-                        </small>
+                        <div class="response-meta">
+                            <small>
+                                Por:
+                                <strong>{{ resp.author.name }}</strong>
+                                {% if resp.date %} — {{ resp.date }}{% endif %}
+                            </small>
+                            <span><strong>{{ resp.calculate_score() }}</strong> puntos</span>
+                        </div>
+                        {% if session.user_id == question.author_id %}
+                            <form method="post"
+                                  action="{{ url_for('questions.accept_answer', answer_id=resp.id) }}">
+                                <button class="btn" type="submit">
+                                    {% if resp.is_accepted %}Quitar aceptación{% else %}Aceptar respuesta{% endif %}
+                                </button>
+                            </form>
+                        {% endif %}
                     </li>
                 {% endfor %}
             </ul>

@@ -18,15 +18,15 @@
     <!-- Barra superior compartida por todas las páginas -->
     <header class="site-header">
         <div class="container header-bar">
-            <a class="brand" href="{{ url_for('web.index') if 'web.index' in current_app.view_functions else '#' }}">
+            <a class="brand" href="{{ url_for('web.index') }}">
                 Q&amp;A
             </a>
 
             <nav class="main-nav" aria-label="Navegación principal">
                 {% block nav_links %}
-                    <a href="#preguntas">Preguntas</a>
-                    <a href="#nueva-pregunta">Nueva pregunta</a>
-                    <a href="#registro">Registrarse</a>
+                    <a href="{{ url_for('questions.list_questions') }}">Preguntas</a>
+                    <a href="{{ url_for('questions.create_question') }}">Nueva pregunta</a>
+                    <a href="{{ url_for('users.registro') }}">Registrarse</a>
                 {% endblock %}
             </nav>
         </div>

@@ -2,7 +2,7 @@
 <div class="vote-controls" data-question-id="{{ question.id }}">
     <form
         method="post"
-        action="{{ vote_question_url if vote_question_url is defined else '#votar-favor' }}"
+        action="{{ url_for('questions.vote_question', question_id=question.id) }}"
         class="vote-form"
     >
         <input type="hidden" name="vote" value="POSITIVE">
@@ -17,7 +17,7 @@
 
     <form
         method="post"
-        action="{{ vote_question_url if vote_question_url is defined else '#votar-contra' }}"
+        action="{{ url_for('questions.vote_question', question_id=question.id) }}"
         class="vote-form"
     >
         <input type="hidden" name="vote" value="NEGATIVE">

@@ -10,11 +10,10 @@
             votar aportes y generar respuestas automáticas con IA cuando corresponda.
         </p>
 
-        {# cuando existan las rutas en web/ #}
         <div style="display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin-top: 16px;">
-            <a class="btn btn-primary" href="#preguntas">Ver preguntas</a>
-            <a class="btn" href="#nueva-pregunta">Nueva pregunta</a>
-            <a class="btn" href="#registro">Registrarse</a>
+            <a class="btn btn-primary" href="{{ url_for('questions.list_questions') }}">Ver preguntas</a>
+            <a class="btn" href="{{ url_for('questions.create_question') }}">Nueva pregunta</a>
+            <a class="btn" href="{{ url_for('users.registro') }}">Registrarse</a>
         </div>
     </section>
 

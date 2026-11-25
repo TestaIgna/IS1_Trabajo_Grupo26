@@ -225,6 +225,72 @@ select {
     color: #1f2937;
     font-size: 0.85rem;
 }
+
+.ai-detail-block {
+    margin-bottom: 16px;
+}
+
+.answer-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 16px 0 20px;
+    padding: 16px;
+    border: 1px solid #d8dee6;
+    border-radius: 8px;
+    background-color: #f8fafc;
+}
+
+.answer-form label {
+    font-weight: bold;
+}
+
+.response-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.response-item {
+    border: 1px solid #d8dee6;
+    border-radius: 8px;
+    padding: 14px;
+}
+
+.response-item > p {
+    white-space: pre-wrap;
+}
+
+.response-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    color: #4b5563;
+}
+
+.accepted-badge,
+.bot-badge {
+    display: inline-block;
+    margin-right: 6px;
+    margin-bottom: 8px;
+    padding: 2px 9px;
+    border-radius: 999px;
+    font-size: 0.8rem;
+}
+
+.accepted-badge {
+    background-color: #dcfce7;
+    color: #166534;
+}
+
+.bot-badge {
+    background-color: #cffafe;
+    color: #155e75;
+}
+
 /* Pie de página */
 .site-footer {
     background-color: #ffffff;

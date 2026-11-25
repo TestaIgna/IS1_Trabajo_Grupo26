@@ -67,7 +67,8 @@ def registro():
             role = TipoRol.USERGRAL
         )
         db.session.add(db_user)
-        db.session.commit
+        db.session.commit()
+        session["user_id"] = db_user.id
 
         logger.info("user created: %s", email)
         #Se registro al usuario correctamente
@@ -96,5 +97,4 @@ def registro():
 def logout():
  session.pop("user", None)
  return redirect("/")
-
 
