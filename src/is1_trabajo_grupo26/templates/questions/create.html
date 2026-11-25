@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Nueva pregunta — Foro Q&amp;A{% endblock %}
+
+{% block content %}
+    <section class="card">
+        <h1>Crear una pregunta</h1>
+
+        <form method="post">
+            <label for="title">Título</label>
+            <input id="title" name="title" type="text" value="{{ title or '' }}" required>
+
+            <label for="body" style="display: block; margin-top: 12px;">Consulta</label>
+            <textarea id="body" name="body" rows="6" required>{{ body or '' }}</textarea>
+
+            <label for="category_id" style="display: block; margin-top: 12px;">Categoría</label>
+            {% if categories %}
+                <select id="category_id" name="category_id" required>
+                    <option value="">Seleccioná una categoría</option>
+                    {% for category in categories %}
+                        <option value="{{ category.id }}" {% if category_id == category.id %}selected{% endif %}>
+                            {{ category.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            {% else %}
+                <p>No hay categorías disponibles. Creá una desde la API primero.</p>
+            {% endif %}
+
+            <label for="tags" style="display: block; margin-top: 12px;">Etiquetas (separadas por comas)</label>
+            <input id="tags" name="tags" type="text" placeholder="python, flask, #ia-help">
+
+            <button class="btn btn-primary" type="submit" style="margin-top: 12px;">Publicar pregunta</button>
+        </form>
+    </section>
+{% endblock %}

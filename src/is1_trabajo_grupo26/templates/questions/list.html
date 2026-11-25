@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}Preguntas — Foro Q&amp;A{% endblock %}
+
+{% block content %}
+    <section class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+            <h1>Preguntas</h1>
+            <a class="btn btn-primary" href="{{ url_for('questions.create_question') }}">Nueva pregunta</a>
+        </div>
+
+        {% if questions %}
+            {% for question in questions %}
+                <article class="card">
+                    <h2>
+                        <a href="{{ url_for('questions.detail', question_id=question.id) }}">
+                            {{ question.title }}
+                        </a>
+                    </h2>
+                    <p>{{ question.body }}</p>
+                    <small>Categoría: {{ question.category.name }}</small>
+                    <br>
+                    <small>{{ question.calculate_score() }} puntos</small>
+                </article>
+            {% endfor %}
+        {% else %}
+            <p>Todavía no hay preguntas publicadas.</p>
+        {% endif %}
+    </section>
+{% endblock %}

@@ -10,3 +10,6 @@ class Category(db.Model):
     name = db.Column(db.String(100), nullable=False, unique=True)
 
     questions = db.relationship("Question", back_populates="category")
+
+    def __str__(self) -> str:
+        return self.name

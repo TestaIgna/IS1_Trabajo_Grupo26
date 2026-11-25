@@ -1,0 +1,28 @@
+{# Bloque parcial de votos y puntaje (#43) — se incluye dentro de la página de la pregunta #}
+<div class="vote-controls" data-question-id="{{ question.id }}">
+    <form
+        method="post"
+        action="{{ url_for('questions.vote_question', question_id=question.id) }}"
+        class="vote-form"
+    >
+        <input type="hidden" name="vote" value="POSITIVE">
+        <button type="submit" class="btn btn-vote-up" aria-label="Votar a favor">
+            Votar a favor
+        </button>
+    </form>
+
+    <span class="vote-score" aria-live="polite">
+        {{ question.calculate_score() }} puntos
+    </span>
+
+    <form
+        method="post"
+        action="{{ url_for('questions.vote_question', question_id=question.id) }}"
+        class="vote-form"
+    >
+        <input type="hidden" name="vote" value="NEGATIVE">
+        <button type="submit" class="btn btn-vote-down" aria-label="Votar en contra">
+            Votar en contra
+        </button>
+    </form>
+</div>

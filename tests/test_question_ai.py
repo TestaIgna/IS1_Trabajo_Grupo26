@@ -100,3 +100,49 @@ def test_generate_ai_answer_accepts_ia_help_tag_object():
             .all()
         )
         assert len(responses) == 1
+
+
+def test_question_detail_shows_category_tags_and_responses():
+    app, client, q1_id, _ = _make_client()
+    with app.app_context():
+        question = db.session.get(Question, q1_id)
+        question.tags.append(Tag(title="#ia-help"))
+        responder = db.session.execute(db.select(Author)).scalars().all()[0]
+        db.session.add(Response(body="Respuesta de prueba", question=question, author=responder))
+        db.session.commit()
+
+    response = client.get(f"/questions/{q1_id}")
+
+    assert response.status_code == 200
+    assert b"Duda con Flask" in response.data
+    assert b"Python" in response.data
+    assert b"#ia-help" in response.data
+    assert b"Respuesta de prueba" in response.data
+    assert b"Asistente IA" in response.data
+
+
+def test_question_detail_returns_404_when_missing():
+    _, client, _, _ = _make_client()
+
+    response = client.get("/questions/9999")
+
+    assert response.status_code == 404
+
+
+def test_registered_user_can_publish_answer():
+    app, client, q1_id, _ = _make_client()
+    with app.app_context():
+        user = db.session.execute(db.select(Author)).scalars().all()[0]
+        user_id = user.id
+
+    with client.session_transaction() as flask_session:
+        flask_session["user_id"] = user_id
+
+    response = client.post(
+        f"/questions/{q1_id}/answers",
+        data={"body": "Mi respuesta nueva"},
+        follow_redirects=True,
+    )
+
+    assert response.status_code == 200
+    assert b"Mi respuesta nueva" in response.data
