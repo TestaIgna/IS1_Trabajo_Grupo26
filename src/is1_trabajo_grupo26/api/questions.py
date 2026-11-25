@@ -27,6 +27,9 @@ from is1_trabajo_grupo26.services.ai_answer_service import (
 
 questions_api_bp = Blueprint("questions_api", __name__, url_prefix="/questions")
 
+MAX_TITLE_LENGTH = 200
+MAX_TAG_LENGTH = 20
+
 
 def serialize_question(
     question: Question,
@@ -96,6 +99,17 @@ def _resolve_tags(data: dict[str, Any]) -> list[Tag]:
 
     tag_titles = require_string_list(data, "tags", optional=True)
     for title in tag_titles:
+        if len(title) > MAX_TAG_LENGTH:
+            raise ValidationError(
+                f"La etiqueta '{title}' supera el máximo de {MAX_TAG_LENGTH} caracteres.",
+                details={
+                    "tags": (
+                        f"Cada etiqueta no puede superar los {MAX_TAG_LENGTH} caracteres."
+                    )
+                },
+            )
+
+    for title in tag_titles:
         tag = db.session.execute(
             db.select(Tag).where(func.lower(Tag.title) == title.lower())
         ).scalar_one_or_none()
@@ -149,7 +163,7 @@ def get_question(question_id: int):
 def create_question():
     """Crea una pregunta y dispara respuesta automática de IA si incluye #ia-help."""
     data = get_json_body()
-    title = require_non_empty_string(data, "title", max_length=200)
+    title = require_non_empty_string(data, "title", max_length=MAX_TITLE_LENGTH)
     body = require_non_empty_string(data, "body")
     category_id = require_int(data, "category_id", positive=True)
     author_id = require_int(data, "author_id", positive=True)
@@ -206,7 +220,9 @@ def update_question(question_id: int):
         raise ValidationError("Debe enviar al menos un campo para actualizar.")
 
     if "title" in data:
-        question.title = require_non_empty_string(data, "title", max_length=200)
+        question.title = require_non_empty_string(
+            data, "title", max_length=MAX_TITLE_LENGTH
+        )
     if "body" in data:
         question.body = require_non_empty_string(data, "body")
     if "category_id" in data:

@@ -3,34 +3,208 @@
 {% block title %}Nueva pregunta — Foro Q&amp;A{% endblock %}
 
 {% block content %}
+    {% set form_errors = errors if errors is defined else {} %}
+    {% set chosen_tags = selected_tags if selected_tags is defined else [] %}
+    {% set recommended = active_recommended_tags if active_recommended_tags is defined else [] %}
+    {% set recommended_lower = recommended | map('lower') | list %}
+
     <section class="card">
         <h1>Crear una pregunta</h1>
 
-        <form method="post">
-            <label for="title">Título</label>
-            <input id="title" name="title" type="text" value="{{ title or '' }}" required>
+        <form method="post" class="question-form" novalidate>
+            <div class="form-group">
+                <label for="title">Título</label>
+                <input
+                    id="title"
+                    name="title"
+                    type="text"
+                    value="{{ title or '' }}"
+                    maxlength="{{ max_title_length|default(200) }}"
+                    class="{% if form_errors.get('title') %}input-error{% endif %}"
+                    {% if form_errors.get('title') %}aria-invalid="true" aria-describedby="title-error"{% endif %}
+                    required
+                >
+                <small class="form-hint">Máximo {{ max_title_length|default(200) }} caracteres.</small>
+                {% if form_errors.get('title') %}
+                    <span id="title-error" class="field-error" role="alert">{{ form_errors['title'] }}</span>
+                {% endif %}
+            </div>
 
-            <label for="body" style="display: block; margin-top: 12px;">Consulta</label>
-            <textarea id="body" name="body" rows="6" required>{{ body or '' }}</textarea>
+            <div class="form-group">
+                <label for="body">Consulta</label>
+                <textarea
+                    id="body"
+                    name="body"
+                    rows="6"
+                    class="{% if form_errors.get('body') %}input-error{% endif %}"
+                    {% if form_errors.get('body') %}aria-invalid="true" aria-describedby="body-error"{% endif %}
+                    required
+                >{{ body or '' }}</textarea>
+                {% if form_errors.get('body') %}
+                    <span id="body-error" class="field-error" role="alert">{{ form_errors['body'] }}</span>
+                {% endif %}
+            </div>
 
-            <label for="category_id" style="display: block; margin-top: 12px;">Categoría</label>
-            {% if categories %}
-                <select id="category_id" name="category_id" required>
-                    <option value="">Seleccioná una categoría</option>
-                    {% for category in categories %}
-                        <option value="{{ category.id }}" {% if category_id == category.id %}selected{% endif %}>
-                            {{ category.name }}
-                        </option>
+            <div class="form-group">
+                <label for="category_id">Categoría</label>
+                {% if categories %}
+                    <select
+                        id="category_id"
+                        name="category_id"
+                        class="{% if form_errors.get('category_id') %}input-error{% endif %}"
+                        {% if form_errors.get('category_id') %}aria-invalid="true" aria-describedby="category_id-error"{% endif %}
+                        required
+                    >
+                        <option value="">Seleccioná una categoría</option>
+                        {% for category in categories %}
+                            <option value="{{ category.id }}" {% if category_id == category.id %}selected{% endif %}>
+                                {{ category.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                {% else %}
+                    <p class="form-hint">No hay categorías disponibles. Creá una desde la API primero.</p>
+                {% endif %}
+                {% if form_errors.get('category_id') %}
+                    <span id="category_id-error" class="field-error" role="alert">{{ form_errors['category_id'] }}</span>
+                {% endif %}
+            </div>
+
+            <fieldset class="form-group tag-fieldset {% if form_errors.get('tags') %}input-error{% endif %}"
+                      {% if form_errors.get('tags') %}aria-describedby="tags-error"{% endif %}>
+                <legend>Etiquetas</legend>
+
+                <label class="ia-help-option">
+                    <input
+                        type="checkbox"
+                        name="selected_tags"
+                        value="#ia-help"
+                        {% if '#ia-help' in chosen_tags %}checked{% endif %}
+                    >
+                    <span>
+                        <strong>#ia-help</strong> — Solicitar ayuda de respuesta automática con IA
+                    </span>
+                </label>
+
+                <div class="tag-section">
+                    <span class="tag-section-title">Etiquetas recomendadas según la categoría</span>
+                    <div id="recommended-tags-picker" class="tag-picker">
+                        {% for tag_name in recommended %}
+                            <label class="tag-option">
+                                <input
+                                    type="checkbox"
+                                    name="selected_tags"
+                                    value="{{ tag_name }}"
+                                    {% if tag_name|lower in chosen_tags %}checked{% endif %}
+                                >
+                                <span>{{ tag_name }}</span>
+                            </label>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                {% set extra_tags = [] %}
+                {% if existing_tags is defined %}
+                    {% for tag_name in existing_tags %}
+                        {% if tag_name|lower not in recommended_lower %}
+                            {% set _ = extra_tags.append(tag_name) %}
+                        {% endif %}
                     {% endfor %}
-                </select>
-            {% else %}
-                <p>No hay categorías disponibles. Creá una desde la API primero.</p>
-            {% endif %}
+                {% endif %}
+                {% if extra_tags %}
+                    <div class="tag-section">
+                        <span class="tag-section-title">Otras etiquetas disponibles</span>
+                        <div class="tag-picker">
+                            {% for tag_name in extra_tags %}
+                                <label class="tag-option">
+                                    <input
+                                        type="checkbox"
+                                        name="selected_tags"
+                                        value="{{ tag_name }}"
+                                        {% if tag_name|lower in chosen_tags %}checked{% endif %}
+                                    >
+                                    <span>{{ tag_name }}</span>
+                                </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
 
-            <label for="tags" style="display: block; margin-top: 12px;">Etiquetas (separadas por comas)</label>
-            <input id="tags" name="tags" type="text" placeholder="python, flask, #ia-help">
+                <div class="tag-custom-input">
+                    <label for="tags">Agregar otras etiquetas (separadas por comas)</label>
+                    <input
+                        id="tags"
+                        name="tags"
+                        type="text"
+                        value="{{ tags_input or '' }}"
+                        placeholder="python, flask, sqlite"
+                        class="{% if form_errors.get('tags') %}input-error{% endif %}"
+                        {% if form_errors.get('tags') %}aria-invalid="true"{% endif %}
+                    >
+                    <small class="form-hint">
+                        Podés escribir etiquetas nuevas separadas por comas (máximo {{ max_tag_length|default(20) }} caracteres por etiqueta).
+                    </small>
+                </div>
 
-            <button class="btn btn-primary" type="submit" style="margin-top: 12px;">Publicar pregunta</button>
+                {% if form_errors.get('tags') %}
+                    <span id="tags-error" class="field-error" role="alert">{{ form_errors['tags'] }}</span>
+                {% endif %}
+            </fieldset>
+
+            <button class="btn btn-primary" type="submit">Publicar pregunta</button>
         </form>
     </section>
+{% endblock %}
+
+{% block extra_scripts %}
+    <script>
+        (function () {
+            const categorySelect = document.getElementById("category_id");
+            const picker = document.getElementById("recommended-tags-picker");
+            if (!categorySelect || !picker) {
+                return;
+            }
+
+            const tagsByCategory = {{ (tags_by_category if tags_by_category is defined else {}) | tojson }};
+            const defaultTags = {{ (default_recommended_tags if default_recommended_tags is defined else []) | tojson }};
+
+            function renderRecommendedTags() {
+                const selectedCategory = categorySelect.value;
+                const tags = (selectedCategory && tagsByCategory[selectedCategory])
+                    ? tagsByCategory[selectedCategory]
+                    : defaultTags;
+
+                const checkedValues = new Set(
+                    Array.from(picker.querySelectorAll('input[name="selected_tags"]:checked'))
+                        .map((input) => input.value.toLowerCase())
+                );
+
+                while (picker.firstChild) {
+                    picker.removeChild(picker.firstChild);
+                }
+
+                tags.forEach((tagName) => {
+                    const label = document.createElement("label");
+                    label.className = "tag-option";
+
+                    const checkbox = document.createElement("input");
+                    checkbox.type = "checkbox";
+                    checkbox.name = "selected_tags";
+                    checkbox.value = tagName;
+                    if (checkedValues.has(tagName.toLowerCase())) {
+                        checkbox.checked = true;
+                    }
+
+                    const span = document.createElement("span");
+                    span.textContent = tagName;
+
+                    label.appendChild(checkbox);
+                    label.appendChild(span);
+                    picker.appendChild(label);
+                });
+            }
+
+            categorySelect.addEventListener("change", renderRecommendedTags);
+        })();
+    </script>
 {% endblock %}

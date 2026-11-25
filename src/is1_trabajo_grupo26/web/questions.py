@@ -1,22 +1,23 @@
 import logging
 import secrets
+import unicodedata
 
 from flask import Blueprint, flash, redirect, render_template, request, session, url_for
 
 from is1_trabajo_grupo26.extensions import db
 from is1_trabajo_grupo26.models.author import TipoRol
 from is1_trabajo_grupo26.models.author_model import Author
+from is1_trabajo_grupo26.models.category import Category
 from is1_trabajo_grupo26.models.question import Question
 from is1_trabajo_grupo26.models.response import Response
-from is1_trabajo_grupo26.models.category import Category
 from is1_trabajo_grupo26.models.tag import Tag
 from is1_trabajo_grupo26.models.vote import VoteType
-from is1_trabajo_grupo26.services.vote_service import register_vote
 from is1_trabajo_grupo26.services.strategy import (
     ConcreteLocal,
     ConcreteStrategyGemini,
     ConcreteStrategyOpenAI,
 )
+from is1_trabajo_grupo26.services.vote_service import register_vote
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +28,121 @@ STRATEGIES = {
     "openai": ("OpenAI Bot", "openai-bot@ia.local", ConcreteStrategyOpenAI),
     "local": ("Local Bot", "local-bot@ia.local", ConcreteLocal),
 }
+
+MAX_TITLE_LENGTH = 200
+MAX_TAG_LENGTH = 20
+IA_HELP_TAG = "#ia-help"
+DEFAULT_RECOMMENDED_TAGS = ["duda", "ayuda", "buenas-practicas", "debug"]
+CATEGORY_TAG_RECOMMENDATIONS: list[tuple[tuple[str, ...], list[str]]] = [
+    (
+        ("python", "flask", "django", "backend"),
+        ["python", "flask", "sqlalchemy", "pytest", "api"],
+    ),
+    (
+        ("base", "datos", "sql", "sqlite", "postgres"),
+        ["sql", "sqlite", "alembic", "modelado", "orm"],
+    ),
+    (
+        ("ingenier", "arquitect", "disen", "patron", "uml"),
+        ["uml", "patrones", "arquitectura", "testing", "solid"],
+    ),
+    (
+        ("front", "web", "html", "css", "interfaz", "ui"),
+        ["html", "css", "jinja2", "ui", "formularios"],
+    ),
+    (
+        ("ia", "inteligencia", "llm", "bot"),
+        ["llm", "strategy", "gemini", "openai", "prompt"],
+    ),
+]
+
+
+def _normalize_lookup(text: str) -> str:
+    normalized = unicodedata.normalize("NFKD", text)
+    ascii_text = "".join(ch for ch in normalized if not unicodedata.combining(ch))
+    return ascii_text.lower().strip()
+
+
+def _dedupe_tags(items: list[str]) -> list[str]:
+    result: list[str] = []
+    seen: set[str] = set()
+    for item in items:
+        clean = item.strip()
+        if not clean:
+            continue
+        key = clean.lower()
+        if key not in seen:
+            seen.add(key)
+            result.append(clean)
+    return result
+
+
+def _curated_tags_for_category(category_name: str) -> list[str]:
+    lookup = _normalize_lookup(category_name)
+    matched: list[str] = []
+    for keywords, tags in CATEGORY_TAG_RECOMMENDATIONS:
+        if any(keyword in lookup for keyword in keywords):
+            matched.extend(tags)
+    if matched:
+        return _dedupe_tags(matched)
+    return list(DEFAULT_RECOMMENDED_TAGS)
+
+
+def _build_tag_context(
+    categories: list[Category],
+) -> tuple[dict[str, list[str]], list[str]]:
+    tags_by_category: dict[str, list[str]] = {}
+    for category in categories:
+        used_in_category = sorted(
+            {
+                tag.title.strip()
+                for question in category.questions
+                for tag in question.tags
+                if tag.title
+                and tag.title.strip().lower() != IA_HELP_TAG
+                and len(tag.title.strip()) <= MAX_TAG_LENGTH
+            },
+            key=str.lower,
+        )
+        curated = _curated_tags_for_category(category.name)
+        tags_by_category[str(category.id)] = _dedupe_tags(used_in_category + curated)
+
+    all_tags = db.session.execute(db.select(Tag).order_by(Tag.title)).scalars().all()
+    existing_tags = _dedupe_tags(
+        [
+            tag.title
+            for tag in all_tags
+            if tag.title
+            and tag.title.strip().lower() != IA_HELP_TAG
+            and len(tag.title.strip()) <= MAX_TAG_LENGTH
+        ]
+    )
+    return tags_by_category, existing_tags
+
+
+def _parse_and_validate_tags(
+    selected_tags: list[str],
+    raw_tags: str,
+) -> tuple[list[str], str | None]:
+    raw_candidates = list(selected_tags) + raw_tags.split(",")
+    normalized_tags = _dedupe_tags(raw_candidates)
+    too_long = [tag for tag in normalized_tags if len(tag) > MAX_TAG_LENGTH]
+    if too_long:
+        listed = ", ".join(too_long)
+        return (
+            [],
+            f"Las etiquetas no pueden superar los {MAX_TAG_LENGTH} caracteres (excedidas: {listed}).",
+        )
+    return normalized_tags, None
+
+
+def _active_recommended_tags(
+    category_id: int | None,
+    tags_by_category: dict[str, list[str]],
+) -> list[str]:
+    if category_id is not None and str(category_id) in tags_by_category:
+        return list(tags_by_category[str(category_id)])
+    return list(DEFAULT_RECOMMENDED_TAGS)
 
 
 @questions_bp.route("", methods=["GET"])
@@ -51,28 +167,77 @@ def create_question():
         flash("La sesión no corresponde a un usuario válido.", "danger")
         return redirect(url_for("users.registro"))
 
+    tags_by_category, existing_tags = _build_tag_context(categories)
+
     if request.method == "GET":
-        return render_template("questions/create.html", categories=categories)
+        category_id = request.args.get("category_id", type=int)
+        return render_template(
+            "questions/create.html",
+            categories=categories,
+            errors={},
+            title="",
+            body="",
+            category_id=category_id,
+            tags_input="",
+            selected_tags=set(),
+            active_recommended_tags=_active_recommended_tags(category_id, tags_by_category),
+            tags_by_category=tags_by_category,
+            default_recommended_tags=DEFAULT_RECOMMENDED_TAGS,
+            existing_tags=existing_tags,
+            max_title_length=MAX_TITLE_LENGTH,
+            max_tag_length=MAX_TAG_LENGTH,
+        )
 
     title = (request.form.get("title") or "").strip()
     body = (request.form.get("body") or "").strip()
     category_id = request.form.get("category_id", type=int)
+    selected_tags_raw = request.form.getlist("selected_tags")
+    tags_input = (request.form.get("tags") or "").strip()
+
+    errors: dict[str, str] = {}
+    if not title:
+        errors["title"] = "El título es obligatorio."
+    elif len(title) > MAX_TITLE_LENGTH:
+        errors["title"] = f"El título no puede superar los {MAX_TITLE_LENGTH} caracteres."
+
+    if not body:
+        errors["body"] = "La consulta es obligatoria."
+
     category = db.session.get(Category, category_id) if category_id else None
-    if not title or not body or category is None:
-        flash("Completá el título, el cuerpo y elegí una categoría.", "danger")
-        return render_template(
-            "questions/create.html",
-            categories=categories,
-            title=title,
-            body=body,
-            category_id=category_id,
+    if category is None:
+        errors["category_id"] = "Debés seleccionar una categoría válida."
+
+    normalized_tags, tags_error = _parse_and_validate_tags(selected_tags_raw, tags_input)
+    if tags_error is not None:
+        errors["tags"] = tags_error
+
+    if errors:
+        selected_tags = {t.strip().lower() for t in selected_tags_raw if t.strip()}
+        return (
+            render_template(
+                "questions/create.html",
+                categories=categories,
+                errors=errors,
+                title=title,
+                body=body,
+                category_id=category_id,
+                tags_input=tags_input,
+                selected_tags=selected_tags,
+                active_recommended_tags=_active_recommended_tags(
+                    category_id if category is not None else None,
+                    tags_by_category,
+                ),
+                tags_by_category=tags_by_category,
+                default_recommended_tags=DEFAULT_RECOMMENDED_TAGS,
+                existing_tags=existing_tags,
+                max_title_length=MAX_TITLE_LENGTH,
+                max_tag_length=MAX_TAG_LENGTH,
+            ),
+            400,
         )
 
     tags = []
-    for raw_tag in (request.form.get("tags") or "").split(","):
-        title_tag = raw_tag.strip()
-        if not title_tag:
-            continue
+    for title_tag in normalized_tags:
         tag = db.session.execute(
             db.select(Tag).where(db.func.lower(Tag.title) == title_tag.lower())
         ).scalar_one_or_none()
@@ -201,6 +366,38 @@ def vote_question(question_id: int):
     except ValueError as exc:
         flash(str(exc), "danger")
     return redirect(url_for("questions.detail", question_id=question.id))
+
+
+@questions_bp.route("/answers/<int:answer_id>/vote", methods=["POST"])
+def vote_answer(answer_id: int):
+    user_id = session.get("user_id")
+    if user_id is None:
+        flash("Necesitás registrarte para votar.", "warning")
+        return redirect(url_for("users.registro"))
+
+    answer = db.session.get(Response, answer_id)
+    if answer is None:
+        return ("Respuesta no encontrada.", 404)
+
+    raw_vote = (request.form.get("vote") or "").strip().upper()
+    vote_type = {
+        "POSITIVE": VoteType.POSITIVE,
+        "NEGATIVE": VoteType.NEGATIVE,
+    }.get(raw_vote)
+    if vote_type is None:
+        flash("El voto seleccionado no es válido.", "danger")
+        return redirect(url_for("questions.detail", question_id=answer.question_id))
+
+    try:
+        register_vote(
+            user_id=user_id,
+            vote_type=vote_type,
+            response_id=answer.id,
+        )
+        flash("Tu voto en la respuesta fue registrado.", "success")
+    except ValueError as exc:
+        flash(str(exc), "danger")
+    return redirect(url_for("questions.detail", question_id=answer.question_id))
 
 
 @questions_bp.route("/<int:question_id>/answers", methods=["POST"])
