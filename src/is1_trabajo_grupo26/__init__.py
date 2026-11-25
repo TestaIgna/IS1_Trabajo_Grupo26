@@ -30,4 +30,8 @@ def create_app(config_class=Config):
 
     register_api(app)
 
+    from is1_trabajo_grupo26.web.index import web_bp
+
+    app.register_blueprint(web_bp)
+    
     return app

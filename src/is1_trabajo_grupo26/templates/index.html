@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}Inicio — Foro Q&amp;A{% endblock %}
+
+{% block content %}
+    <section class="card" style="text-align: center;">
+        <h1>Foro Q&amp;A</h1>
+        <p>
+            Espacio para publicar preguntas, responder a otros integrantes,
+            votar aportes y generar respuestas automáticas con IA cuando corresponda.
+        </p>
+
+        {# cuando existan las rutas en web/ #}
+        <div style="display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin-top: 16px;">
+            <a class="btn btn-primary" href="#preguntas">Ver preguntas</a>
+            <a class="btn" href="#nueva-pregunta">Nueva pregunta</a>
+            <a class="btn" href="#registro">Registrarse</a>
+        </div>
+    </section>
+
+    <section class="card">
+        <h2>¿Qué podés hacer en la plataforma?</h2>
+        <ul>
+            <li>Registrar usuarios y gestionar el acceso</li>
+            <li>Crear preguntas con categoría y etiquetas (incluyendo <code>#ia-help</code>)</li>
+            <li>Publicar respuestas y votar a favor o en contra</li>
+        </ul>
+    </section>
+{% endblock %}
