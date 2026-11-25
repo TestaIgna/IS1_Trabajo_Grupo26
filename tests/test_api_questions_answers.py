@@ -314,3 +314,66 @@ def test_ai_answer_service_supports_injected_and_failing_strategies(app, db_sess
     assert resp_err is not None
     assert "No se pudo generar la respuesta: timeout LLM" in resp_err.body
     db_session.commit()
+
+
+def test_questions_api_enforces_title_and_tag_max_lengths(client):
+    cat_sw, _, author, _ = _seed_base_entities(client)
+
+    title_too_long = client.post(
+        "/api/questions",
+        json={
+            "title": "a" * 201,
+            "body": "Cuerpo válido",
+            "category_id": cat_sw["id"],
+            "author_id": author["id"],
+        },
+    )
+    assert title_too_long.status_code == 422
+    assert title_too_long.get_json()["code"] == "unprocessable_entity"
+    assert client.get("/api/questions").get_json()["questions"] == []
+
+    tag_too_long = client.post(
+        "/api/questions",
+        json={
+            "title": "Título válido",
+            "body": "Cuerpo válido",
+            "category_id": cat_sw["id"],
+            "author_id": author["id"],
+            "tags": ["python", "t" * 21],
+        },
+    )
+    assert tag_too_long.status_code == 422
+    assert tag_too_long.get_json()["code"] == "unprocessable_entity"
+    assert client.get("/api/questions").get_json()["questions"] == []
+    assert client.get("/api/tags").get_json()["tags"] == []
+
+    boundary_ok = client.post(
+        "/api/questions",
+        json={
+            "title": "b" * 200,
+            "body": "Cuerpo válido en el límite",
+            "category_id": cat_sw["id"],
+            "author_id": author["id"],
+            "tags": ["z" * 20],
+        },
+    )
+    assert boundary_ok.status_code == 201
+    created = boundary_ok.get_json()
+    assert len(created["title"]) == 200
+    assert [tag["title"] for tag in created["tags"]] == ["z" * 20]
+
+    patch_bad_title = client.patch(
+        f"/api/questions/{created['id']}",
+        json={"title": "c" * 201},
+    )
+    assert patch_bad_title.status_code == 422
+
+    patch_bad_tag = client.patch(
+        f"/api/questions/{created['id']}",
+        json={"tags": ["u" * 21]},
+    )
+    assert patch_bad_tag.status_code == 422
+
+    still_intact = client.get(f"/api/questions/{created['id']}").get_json()
+    assert still_intact["title"] == "b" * 200
+    assert [tag["title"] for tag in still_intact["tags"]] == ["z" * 20]

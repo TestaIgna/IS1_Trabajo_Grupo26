@@ -11,6 +11,8 @@ from is1_trabajo_grupo26.models.tag import Tag
 
 tags_bp = Blueprint("tags", __name__, url_prefix="/tags")
 
+MAX_TAG_LENGTH = 20
+
 
 def serialize_tag(tag: Tag) -> dict[str, Any]:
     """Serializa una etiqueta ORM a diccionario JSON."""
@@ -40,7 +42,7 @@ def get_tag(tag_id: int):
 def create_tag():
     """Crea una etiqueta nueva validando duplicados (409)."""
     data = get_json_body()
-    title = require_non_empty_string(data, "title", max_length=60)
+    title = require_non_empty_string(data, "title", max_length=MAX_TAG_LENGTH)
 
     existing = db.session.execute(
         db.select(Tag).where(func.lower(Tag.title) == title.lower())

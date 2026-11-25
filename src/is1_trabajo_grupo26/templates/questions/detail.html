@@ -81,7 +81,33 @@
                                 <strong>{{ resp.author.name }}</strong>
                                 {% if resp.date %} — {{ resp.date }}{% endif %}
                             </small>
-                            <span><strong>{{ resp.calculate_score() }}</strong> puntos</span>
+                        </div>
+                        <div class="vote-controls" data-answer-id="{{ resp.id }}">
+                            <form
+                                method="post"
+                                action="{{ url_for('questions.vote_answer', answer_id=resp.id) }}"
+                                class="vote-form"
+                            >
+                                <input type="hidden" name="vote" value="POSITIVE">
+                                <button type="submit" class="btn btn-vote-up" aria-label="Votar respuesta a favor">
+                                    +1 Votar a favor
+                                </button>
+                            </form>
+
+                            <span class="vote-score" aria-live="polite">
+                                {{ resp.calculate_score() }} puntos
+                            </span>
+
+                            <form
+                                method="post"
+                                action="{{ url_for('questions.vote_answer', answer_id=resp.id) }}"
+                                class="vote-form"
+                            >
+                                <input type="hidden" name="vote" value="NEGATIVE">
+                                <button type="submit" class="btn btn-vote-down" aria-label="Votar respuesta en contra">
+                                    -1 Votar en contra
+                                </button>
+                            </form>
                         </div>
                         {% if session.user_id == question.author_id %}
                             <form method="post"
