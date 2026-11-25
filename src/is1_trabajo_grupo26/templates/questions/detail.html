@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}{{ question.title }} — Foro Q&amp;A{% endblock %}
+
+{% block content %}
+    <article class="card question-detail">
+        <h1>{{ question.title }}</h1>
+
+        <div class="question-meta">
+            {% if question.author is defined and question.author %}
+                <span>
+                    Autor:
+                    <strong>{{ question.author.name if question.author.name is defined else question.author }}</strong>
+                </span>
+            {% endif %}
+
+            {% if question.category is defined and question.category %}
+                <span>
+                    Categoría:
+                    <strong>{{ question.category.title if question.category.title is defined else question.category }}</strong>
+                </span>
+            {% endif %}
+
+            {% if question.date is defined and question.date %}
+                <span>Fecha: {{ question.date }}</span>
+            {% endif %}
+        </div>
+
+        {% if question.tags is defined and question.tags %}
+            <div class="tag-list" aria-label="Etiquetas">
+                {% for tag in question.tags %}
+                    <span class="tag-badge">{{ tag.title if tag.title is defined else tag }}</span>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <div class="question-body">
+            <p>{{ question.body }}</p>
+        </div>
+
+        {# Bloque de votos y puntaje (#43) #}
+        {% include "questions/votes.html" %}
+    </article>
+
+    {# Bloque de opciones de IA (#41)#}
+    {% if has_ia_tag is defined and has_ia_tag %}
+        {% include "questions/ai_selector.html" %}
+    {% endif %}
+
+    {# Listado de respuestas (responses.html cuando esté construido) #}
+    <section class="card question-responses">
+        <h2>Respuestas</h2>
+
+        {# Cuando esté listo el parcial de respuestas va incluido aca 
+           {% include "questions/responses.html" %} #}
+
+        {% if question.responses is defined and question.responses %}
+            <ul class="response-list">
+                {% for resp in question.responses %}
+                    <li class="response-item">
+                        <p>{{ resp.body }}</p>
+                        <small>
+                            {% if resp.author is defined and resp.author %}
+                                Por: {{ resp.author.name if resp.author.name is defined else resp.author }}
+                            {% endif %}
+                            {% if resp.date is defined and resp.date %}
+                                — {{ resp.date }}
+                            {% endif %}
+                        </small>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>Todavía no hay respuestas publicadas para esta pregunta.</p>
+        {% endif %}
+    </section>
+{% endblock %}
