@@ -1,5 +1,6 @@
 from flask import Blueprint, Flask
 
+from is1_trabajo_grupo26.api.answers import answers_api_bp
 from is1_trabajo_grupo26.api.categories import categories_bp
 from is1_trabajo_grupo26.api.errors import (
     ApiError,
@@ -10,6 +11,7 @@ from is1_trabajo_grupo26.api.errors import (
     ValidationError,
     register_error_handlers,
 )
+from is1_trabajo_grupo26.api.questions import questions_api_bp
 from is1_trabajo_grupo26.api.tags import tags_bp
 from is1_trabajo_grupo26.api.users import users_api_bp
 from is1_trabajo_grupo26.api.validation import (
@@ -25,6 +27,8 @@ API_SUB_BLUEPRINTS: tuple[Blueprint, ...] = (
     categories_bp,
     tags_bp,
     users_api_bp,
+    questions_api_bp,
+    answers_api_bp,
 )
 
 
