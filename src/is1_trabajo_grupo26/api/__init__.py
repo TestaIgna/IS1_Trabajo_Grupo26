@@ -1,5 +1,6 @@
 from flask import Blueprint, Flask
 
+from is1_trabajo_grupo26.api.categories import categories_bp
 from is1_trabajo_grupo26.api.errors import (
     ApiError,
     BadRequestError,
@@ -9,6 +10,8 @@ from is1_trabajo_grupo26.api.errors import (
     ValidationError,
     register_error_handlers,
 )
+from is1_trabajo_grupo26.api.tags import tags_bp
+from is1_trabajo_grupo26.api.users import users_api_bp
 from is1_trabajo_grupo26.api.validation import (
     get_json_body,
     require_fields,
@@ -18,7 +21,21 @@ from is1_trabajo_grupo26.api.validation import (
 )
 
 # Punto centralizado para registrar sub-blueprints de la API (/api/...)
-API_SUB_BLUEPRINTS: tuple[Blueprint, ...] = ()
+API_SUB_BLUEPRINTS: tuple[Blueprint, ...] = (
+    categories_bp,
+    tags_bp,
+    users_api_bp,
+)
+
+
+def _ensure_orm_models_loaded() -> None:
+    """Importa todos los modelos ORM para registrar sus mappers en SQLAlchemy."""
+    import is1_trabajo_grupo26.models.author_model
+    import is1_trabajo_grupo26.models.category
+    import is1_trabajo_grupo26.models.question
+    import is1_trabajo_grupo26.models.response
+    import is1_trabajo_grupo26.models.tag
+    import is1_trabajo_grupo26.models.vote  # noqa: F401
 
 
 def create_api_blueprint() -> Blueprint:
@@ -38,6 +55,7 @@ def create_api_blueprint() -> Blueprint:
 
 def register_api(app: Flask) -> None:
     """Registra el blueprint /api y los manejadores uniformes de errores JSON."""
+    _ensure_orm_models_loaded()
     app.register_blueprint(create_api_blueprint())
     register_error_handlers(app)
 
