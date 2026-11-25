@@ -21,6 +21,7 @@ from is1_trabajo_grupo26.api.validation import (
     require_non_empty_string,
     require_string_list,
 )
+from is1_trabajo_grupo26.api.voting import voting_api_bp
 
 # Punto centralizado para registrar sub-blueprints de la API (/api/...)
 API_SUB_BLUEPRINTS: tuple[Blueprint, ...] = (
@@ -29,6 +30,7 @@ API_SUB_BLUEPRINTS: tuple[Blueprint, ...] = (
     users_api_bp,
     questions_api_bp,
     answers_api_bp,
+    voting_api_bp,
 )
 
 
