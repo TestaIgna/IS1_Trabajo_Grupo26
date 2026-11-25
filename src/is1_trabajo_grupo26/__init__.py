@@ -15,4 +15,8 @@ def create_app(config_class=Config):
 
     app.register_blueprint(health_bp)
 
+    from is1_trabajo_grupo26.web.index import web_bp
+
+    app.register_blueprint(web_bp)
+    
     return app
