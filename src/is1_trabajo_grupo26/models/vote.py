@@ -13,11 +13,6 @@ class VoteType(str, Enum):
 Type_vote = VoteType
 
 
-def calculate_vote_score(votes: list["Vote"]) -> int:
-    """Calcula la puntuación neta sumando votos positivos y restando negativos."""
-    return sum(1 if v.vote == VoteType.POSITIVE else -1 for v in votes)
-
-
 class Vote(db.Model):
     """Voto emitido por un usuario sobre una pregunta o una respuesta (XOR)."""
 
