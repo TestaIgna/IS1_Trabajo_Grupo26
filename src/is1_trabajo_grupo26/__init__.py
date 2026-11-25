@@ -25,4 +25,9 @@ def create_app(config_class=Config):
 
     app.register_blueprint(votes_bp)
     
+
+    from is1_trabajo_grupo26.api import register_api
+
+    register_api(app)
+
     return app
