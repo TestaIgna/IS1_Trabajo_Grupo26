@@ -31,6 +31,8 @@ STRATEGIES = {
 
 MAX_TITLE_LENGTH = 200
 MAX_TAG_LENGTH = 20
+MAX_CATEGORY_NAME_LENGTH = 100
+CREATE_NEW_CATEGORY = "__create_new__"
 IA_HELP_TAG = "#ia-help"
 DEFAULT_RECOMMENDED_TAGS = ["duda", "ayuda", "buenas-practicas", "debug"]
 CATEGORY_TAG_RECOMMENDATIONS: list[tuple[tuple[str, ...], list[str]]] = [
@@ -160,7 +162,9 @@ def create_question():
         flash("Necesitás iniciar sesión para crear una pregunta.", "warning")
         return redirect(url_for("users.registro"))
 
-    categories = db.session.execute(db.select(Category).order_by(Category.name)).scalars().all()
+    categories = db.session.execute(
+        db.select(Category).order_by(db.func.lower(Category.name), Category.name)
+    ).scalars().all()
     author = db.session.get(Author, author_id)
     if author is None:
         session.pop("user_id", None)
@@ -170,7 +174,7 @@ def create_question():
     tags_by_category, existing_tags = _build_tag_context(categories)
 
     if request.method == "GET":
-        category_id = request.args.get("category_id", type=int)
+        category_id = request.args.get("category_id", type=int) or ""
         return render_template(
             "questions/create.html",
             categories=categories,
@@ -186,11 +190,19 @@ def create_question():
             existing_tags=existing_tags,
             max_title_length=MAX_TITLE_LENGTH,
             max_tag_length=MAX_TAG_LENGTH,
+            max_category_name_length=MAX_CATEGORY_NAME_LENGTH,
+            create_new_category_value=CREATE_NEW_CATEGORY,
         )
 
     title = (request.form.get("title") or "").strip()
     body = (request.form.get("body") or "").strip()
-    category_id = request.form.get("category_id", type=int)
+    category_choice = (request.form.get("category_id") or "").strip()
+    new_category_name = (request.form.get("new_category_name") or "").strip()
+    category_id = (
+        request.form.get("category_id", type=int)
+        if category_choice != CREATE_NEW_CATEGORY
+        else None
+    )
     selected_tags_raw = request.form.getlist("selected_tags")
     tags_input = (request.form.get("tags") or "").strip()
 
@@ -203,9 +215,39 @@ def create_question():
     if not body:
         errors["body"] = "La consulta es obligatoria."
 
-    category = db.session.get(Category, category_id) if category_id else None
-    if category is None:
-        errors["category_id"] = "Debés seleccionar una categoría válida."
+    category: Category | None = None
+    if category_choice == CREATE_NEW_CATEGORY:
+        if not new_category_name:
+            errors["new_category_name"] = "El nombre de la categoría es obligatorio."
+        else:
+            new_category_name = new_category_name[0].upper() + new_category_name[1:]
+        if (
+            new_category_name
+            and len(new_category_name) > MAX_CATEGORY_NAME_LENGTH
+        ):
+            errors["new_category_name"] = (
+                f"La categoría no puede superar los {MAX_CATEGORY_NAME_LENGTH} caracteres."
+            )
+        elif new_category_name:
+            category = next(
+                (
+                    existing_category
+                    for existing_category in categories
+                    if existing_category.name.casefold() == new_category_name.casefold()
+                ),
+                None,
+            )
+            if category is not None:
+                errors["new_category_name"] = (
+                    "Ya existe una categoría con ese nombre."
+                )
+                category = None
+            else:
+                category = Category(name=new_category_name)
+    else:
+        category = db.session.get(Category, category_id) if category_id else None
+        if category is None:
+            errors["category_id"] = "Debés seleccionar una categoría válida."
 
     normalized_tags, tags_error = _parse_and_validate_tags(selected_tags_raw, tags_input)
     if tags_error is not None:
@@ -220,11 +262,12 @@ def create_question():
                 errors=errors,
                 title=title,
                 body=body,
-                category_id=category_id,
+                category_id=category_choice,
+                new_category_name=new_category_name,
                 tags_input=tags_input,
                 selected_tags=selected_tags,
                 active_recommended_tags=_active_recommended_tags(
-                    category_id if category is not None else None,
+                    category_id if category_choice != CREATE_NEW_CATEGORY and category else None,
                     tags_by_category,
                 ),
                 tags_by_category=tags_by_category,
@@ -232,6 +275,8 @@ def create_question():
                 existing_tags=existing_tags,
                 max_title_length=MAX_TITLE_LENGTH,
                 max_tag_length=MAX_TAG_LENGTH,
+                max_category_name_length=MAX_CATEGORY_NAME_LENGTH,
+                create_new_category_value=CREATE_NEW_CATEGORY,
             ),
             400,
         )
@@ -255,9 +300,14 @@ def create_question():
         author=author,
         tags=tags,
     )
+    if category_choice == CREATE_NEW_CATEGORY:
+        db.session.add(category)
     db.session.add(question)
     db.session.commit()
-    flash("Pregunta creada correctamente.", "success")
+    if category_choice == CREATE_NEW_CATEGORY:
+        flash("Categoría y pregunta creadas correctamente.", "success")
+    else:
+        flash("Pregunta creada correctamente.", "success")
     return redirect(url_for("questions.detail", question_id=question.id))
 
 

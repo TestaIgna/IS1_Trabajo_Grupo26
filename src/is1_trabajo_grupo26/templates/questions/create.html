@@ -47,27 +47,50 @@
 
             <div class="form-group">
                 <label for="category_id">Categoría</label>
-                {% if categories %}
-                    <select
-                        id="category_id"
-                        name="category_id"
-                        class="{% if form_errors.get('category_id') %}input-error{% endif %}"
-                        {% if form_errors.get('category_id') %}aria-invalid="true" aria-describedby="category_id-error"{% endif %}
-                        required
-                    >
-                        <option value="">Seleccioná una categoría</option>
-                        {% for category in categories %}
-                            <option value="{{ category.id }}" {% if category_id == category.id %}selected{% endif %}>
-                                {{ category.name }}
-                            </option>
-                        {% endfor %}
-                    </select>
-                {% else %}
-                    <p class="form-hint">No hay categorías disponibles. Creá una desde la API primero.</p>
-                {% endif %}
+                <select
+                    id="category_id"
+                    name="category_id"
+                    class="{% if form_errors.get('category_id') %}input-error{% endif %}"
+                    {% if form_errors.get('category_id') %}aria-invalid="true" aria-describedby="category_id-error"{% endif %}
+                    required
+                >
+                    <option value="" {% if not category_id %}selected{% endif %}>
+                        Seleccione una opción
+                    </option>
+                    <option value="{{ create_new_category_value }}"
+                            {% if category_id == create_new_category_value %}selected{% endif %}>
+                        Crear categoría
+                    </option>
+                    {% for category in categories %}
+                        <option value="{{ category.id }}" {% if category_id|string == category.id|string %}selected{% endif %}>
+                            {{ category.name }}
+                        </option>
+                    {% endfor %}
+                </select>
                 {% if form_errors.get('category_id') %}
                     <span id="category_id-error" class="field-error" role="alert">{{ form_errors['category_id'] }}</span>
                 {% endif %}
+
+                <div id="new-category-field"
+                     class="form-group"
+                     {% if category_id != create_new_category_value %}hidden{% endif %}>
+                    <label for="new_category_name">Nombre de la nueva categoría</label>
+                    <input
+                        id="new_category_name"
+                        name="new_category_name"
+                        type="text"
+                        value="{{ new_category_name or '' }}"
+                        maxlength="{{ max_category_name_length|default(100) }}"
+                        class="{% if form_errors.get('new_category_name') %}input-error{% endif %}"
+                        {% if category_id != create_new_category_value %}disabled{% endif %}
+                        {% if form_errors.get('new_category_name') %}aria-invalid="true" aria-describedby="new-category-error"{% endif %}
+                    >
+                    {% if form_errors.get('new_category_name') %}
+                        <span id="new-category-error" class="field-error" role="alert">
+                            {{ form_errors['new_category_name'] }}
+                        </span>
+                    {% endif %}
+                </div>
             </div>
 
             <fieldset class="form-group tag-fieldset {% if form_errors.get('tags') %}input-error{% endif %}"
@@ -161,7 +184,22 @@
         (function () {
             const categorySelect = document.getElementById("category_id");
             const picker = document.getElementById("recommended-tags-picker");
+            const newCategoryField = document.getElementById("new-category-field");
+            const newCategoryInput = document.getElementById("new_category_name");
+            const createNewCategoryValue = {{ create_new_category_value | tojson }};
+
+            function toggleNewCategoryField() {
+                if (!categorySelect || !newCategoryField || !newCategoryInput) {
+                    return;
+                }
+                const creatingCategory = categorySelect.value === createNewCategoryValue;
+                newCategoryField.hidden = !creatingCategory;
+                newCategoryInput.required = creatingCategory;
+                newCategoryInput.disabled = !creatingCategory;
+            }
+
             if (!categorySelect || !picker) {
+                toggleNewCategoryField();
                 return;
             }
 
@@ -204,7 +242,11 @@
                 });
             }
 
-            categorySelect.addEventListener("change", renderRecommendedTags);
+            categorySelect.addEventListener("change", function () {
+                toggleNewCategoryField();
+                renderRecommendedTags();
+            });
+            toggleNewCategoryField();
         })();
     </script>
 {% endblock %}
