@@ -1,7 +1,7 @@
 import logging
 import re
 
-from flask import Blueprint, redirect, render_template, request, session
+from flask import Blueprint, flash, redirect, render_template, request, session, url_for
 from sqlalchemy.exc import IntegrityError
 
 from is1_trabajo_grupo26.extensions import db
@@ -19,6 +19,10 @@ EMAIL_DUPLICADO = "There is already a registered user with that email address"
 
 
 class RegistrationError(Exception):
+    pass
+
+
+class LoginError(Exception):
     pass
 
 
@@ -104,8 +108,58 @@ def registro():
         )
 
 
+@users_bp.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "GET":
+        return render_template("users/login.html", errors={})
+
+    email = (request.form.get("email") or "").strip().lower()
+    password = request.form.get("password") or ""
+    errors: dict[str, str] = {}
+
+    if not email:
+        errors["email"] = "El email es obligatorio."
+    if not password:
+        errors["password"] = "La contraseña es obligatoria."
+
+    if errors:
+        return (
+            render_template(
+                "users/login.html",
+                errors=errors,
+                email=email,
+            ),
+            400,
+        )
+
+    try:
+        user = db.session.execute(
+            db.select(Author).where(Author.email == email)
+        ).scalar_one_or_none()
+
+        if user is None or user.role == TipoRol.BOT or not user.check_password(password):
+            raise LoginError("Email o contraseña incorrectos.")
+
+        session["user_id"] = user.id
+        flash(f"Bienvenido/a, {user.name}.", "success")
+        return redirect(url_for("questions.list_questions"))
+
+    except LoginError as exc:
+        logger.warning("Error en login (%s): %s", email, exc)
+        return (
+            render_template(
+                "users/login.html",
+                errors={},
+                error=str(exc),
+                email=email,
+            ),
+            401,
+        )
+
+
 @users_bp.route("/logout")
 def logout():
     session.pop("user_id", None)
     session.pop("user", None)
+    flash("Sesión cerrada.", "success")
     return redirect("/")
