@@ -44,16 +44,39 @@ Toda la documentación técnica, el diseño del sistema y las decisiones de arqu
 
 ---
 
-## 🗄️ Base de Datos, Migraciones y Tests
+## Instalación y Ejecución
 
-### Configuración local
+### 1. Instalar dependencias y crear la base de datos
 Por defecto el proyecto usa **SQLite local** (`DATABASE_URL=sqlite:///app.db`). Si querés personalizar las variables de entorno usando un archivo `.env` (copiado desde [`.env.example`](./.env.example)), podés pasarlo con `--env-file`:
 
 ```bash
-uv run --env-file .env alembic upgrade head
+# Instalar dependencias del proyecto
+uv sync
+
+# Aplicar todas las migraciones para inicializar la base de datos local
+uv run alembic upgrade head
 ```
 
-### Comandos de Alembic (migraciones)
+### 2. Levantar la aplicación web
+```bash
+uv run flask --app is1_trabajo_grupo26 run --debug
+```
+
+Luego abrir en el navegador `http://127.0.0.1:5000`.
+
+> Por defecto usa respuestas locales; para activar la IA real, creá un `.env` desde [`.env.example`](./.env.example) con tu `GEMINI_API_KEY`.
+
+### 3. Ejecutar tests
+Los tests usan `TestingConfig` sobre SQLite en memoria (`sqlite:///:memory:`), por lo que no modifican la base de datos local:
+
+```bash
+uv run pytest -v
+```
+
+---
+
+## Comandos útiles de Alembic (migraciones)
+
 ```bash
 # Ver el estado actual de las migraciones en la base
 uv run alembic current
@@ -61,18 +84,8 @@ uv run alembic current
 # Generar una nueva migración automática a partir de los modelos en db.metadata
 uv run alembic revision --autogenerate -m "descripcion del cambio"
 
-# Aplicar todas las migraciones pendientes
-uv run alembic upgrade head
-
 # Revertir la última migración aplicada
 uv run alembic downgrade -1
 ```
 
 > **Nota:** Cada vez que agregues un nuevo modelo heredado de `db.Model`, asegurate de importarlo en [`src/is1_trabajo_grupo26/models/__init__.py`](./src/is1_trabajo_grupo26/models/__init__.py) para que `alembic revision --autogenerate` lo detecte.
-
-### Ejecutar tests
-Los tests usan `TestingConfig` sobre SQLite en memoria (`sqlite:///:memory:`), por lo que no modifican la base de datos local:
-
-```bash
-uv run pytest -v
-```
