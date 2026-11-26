@@ -26,7 +26,12 @@
                 {% block nav_links %}
                     <a href="{{ url_for('questions.list_questions') }}">Preguntas</a>
                     <a href="{{ url_for('questions.create_question') }}">Nueva pregunta</a>
-                    <a href="{{ url_for('users.registro') }}">Registrarse</a>
+                    {% if session.get('user_id') %}
+                        <a href="{{ url_for('users.logout') }}">Cerrar sesión</a>
+                    {% else %}
+                        <a href="{{ url_for('users.login') }}">Iniciar sesión</a>
+                        <a href="{{ url_for('users.registro') }}">Registrarse</a>
+                    {% endif %}
                 {% endblock %}
             </nav>
         </div>
